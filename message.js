@@ -77,7 +77,28 @@ module.exports = class Message{
                         "text": "いいえ"
                     }
                 ],
-                "text": "本当にキャンセルしますか？"
+                "text": "間違えました？一から回答しなおしますか？？？"
+            }
+        }
+
+        this.ohisashiburi = {
+            "type": "template",
+            "altText": "this is a confirm template",
+            "template": {
+                "type": "confirm",
+                "actions": [
+                    {
+                        "type": "message",
+                        "label": "相談したい",
+                        "text": "相談したい"
+                    },
+                    {
+                        "type": "message",
+                        "label": "また今度",
+                        "text": "また今度"
+                    }
+                ],
+                "text": "お久しぶりです！またメンターとしゅうかつ相談しますか？"
             }
         }
 
@@ -86,22 +107,30 @@ module.exports = class Message{
             "text": "了解です！　また連絡してください！"
         }
 
-        this.datepicker = {
+        this.question = {
+            "type": "text",
+            "text": "相談内容を簡単に教えてください！ \n例：就活ってなに？, 業界悩んでる.." 
+        }
+
+        this.anotherquestion = {
             "type": "template",
-            "altText": "this is a buttons template",
+            "altText": "this is a confirm template",
             "template": {
-                "type": "buttons",
-                "title": "空いてる日程教えて!",
-                "text": "🙇🙇🙇🙇🙇🙇🙇",
+                "type": "confirm",
                 "actions": [
                     {
-                    "type": "datetimepicker",
-                    "label": "選択する",
-                    "mode": "date",
-                    "data": "date"
+                        "type": "message",
+                        "label": "ある",
+                        "text": "ある"
                     },
-                ]
-            }
+                    {
+                        "type": "message",
+                        "label": "ない",
+                        "text": "ない"
+                    }
+                ],
+                "text": "他にも相談内容はありますか？"
+            } 
         }
 
         this.misstake = {
@@ -121,18 +150,13 @@ module.exports = class Message{
             },
             {
                 "type": "text",
-                "text": "専攻はなんですか？\n　例：　工学部建築学科、　工学研究科建築学専攻"
+                "text": "専攻はなんですか？\n例: 工学部建築学科, 工学研究科建築学専攻"
             }
         ]
 
         this.grade = {
             "type": "text",
             "text": "学年はなんですか？"
-        }
-
-        this.date = {
-            "type": "text",
-            "text": "都合のいい、日時を教えてください"
         }
 
         this.finish = {
@@ -147,7 +171,7 @@ module.exports = class Message{
                         "uri":"line://ti/p/@xmm7349x"
                     }
                 ],
-                "text": `ご予約ありがとうございます！それでは指定のお時間に食堂前にてお待ちしております！　キャンセル、お時間・場所の変更や当日の連絡はLINE＠で連絡いたします！それでは当日お会いするのを楽しみにしています！`
+                "text": `ご予約ありがとうございます！ キャンセル、時間の調整や当日の連絡はLINE＠で連絡するので！LINE＠の登録を以下からお願いします！！`
             }
         }
 
@@ -250,6 +274,19 @@ module.exports = class Message{
                                 "type": "message",
                                 "label": "建設",
                                 "text": "建設"
+                            }
+                        ]
+                      },
+                      {
+                        "thumbnailImageUrl": "https://cdn-ak.f.st-hatena.com/images/fotolife/c/ccfa/20181014/20181014233427.png",
+                        "imageBackgroundColor": "#FFFFFF",
+                        "title": "重工",
+                        "text": "三菱重工・IHI・川崎重工",
+                        "actions": [
+                            {
+                                "type": "message",
+                                "label": "重工",
+                                "text": "重工"
                             }
                         ]
                       },

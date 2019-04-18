@@ -1,7 +1,6 @@
 const express = require('express')
 const app = express()
 //const dotenv = require('dotenv')
-const moment = require('moment')
 //dotenv.config()
 require('now-env')
 
@@ -11,7 +10,6 @@ const config = require('./plugins/line').default
 const Message = require('./message')
 const line = require('@line/bot-sdk')
 const postHandler = require('./post-handler')
-const chancel = require('./chnacel')
 
 const msg = new Message()
 
@@ -72,49 +70,119 @@ app.post('/bot/webhook', line.middleware(config), (req, res, next) => {
 													bot.replyMessage(event.replyToken, msg.misstake)
 												}
 											}
-											
-											else if (value == 7){
-												if(responses[0].queryResult && responses[0].queryResult.action == "handle-chancel"){
-														bot.replyMessage(event.replyToken, msg.reallycancel)
-														db[event.source.userId.toString()] = 8
-												}
-												else{
-													bot.replyMessage(event.replyToken, {
-														"type": "text",
-            								"text": "了解です！面談日程の変更はLINE@からできます！"
-													}).then(() => {
-														delete db[event.source.userId.toString()]
-													})
-												}
-											}
-
-											else if (value == 8){
-												if(event.message.text == "はい"){
-													bot.replyMessage(event.replyToken, msg.goodby)
-													bot.getProfile(event.source.userId).then(profile => {
-														value = db[`${event.source.userId.toString()}-date`]
-														chancel(profile.displayName, profile.pictureUrl, value, event.source.userId)
-														delete db[`${event.source.userId.toString()}-date`]
-													})
-												}
-												else{
-													bot.replyMessage(event.replyToken, {
-														"type": "text",
-            								"text": "了解です！面談日程の変更はLINE@からできます！"
-													})
-												}
-												delete db[event.source.userId.toString()]
-												
-											}
 
 											else if (value == 4){
-												if (["化学", "食品", "電機メーカー", "総合商社", "ソフトウェア", "インターネットサービス", "建設", "その他"].includes(event.message.text)){
+												if (["化学", "食品", "電機メーカー", "総合商社", "ソフトウェア", "インターネットサービス", "建設", "重工","その他"].includes(event.message.text)){
 													// 都合のいい日程を教えて
-													bot.replyMessage(event.replyToken, msg.datepicker)
+													bot.replyMessage(event.replyToken, msg.question)
+													db[event.source.userId.toString()] = 5
 													db[`${event.source.userId.toString()}-field`] = event.message.text
+													db[`${event.source.userId.toString()}-question`] = []
 												}
 												else{
 													bot.replyMessage(event.replyToken, msg.misstake)
+												}
+											}
+											// 一回目の質問が回答された。他に質問ある？
+											else if (value == 5){
+												db[`${event.source.userId.toString()}-question`].push(event.message.text)
+												bot.replyMessage(event.replyToken, msg.anotherquestion)
+												db[event.source.userId.toString()] = 6
+											}
+											// はい？ー＞質問内容は？　いいえ？ー＞提出
+											else if (value == 6){
+												// 質問内容は？
+												if(event.message.text == "はい"){
+													db[event.source.userId.toString()] = 5
+													bot.replyMessage(event.replyToken, msg.question)
+												}
+												// 提出
+												else{
+													bot.replyMessage(event.replyToken, msg.finish).then(() => {
+														bot.getProfile(event.source.userId).then(profile => {
+															db[`${event.source.userId.toString()}-name`] = profile.displayName
+															db[`${event.source.userId.toString()}-url`] = profile.pictureUrl
+														})
+														.then(() => {
+															var user_data = {
+																name: db[`${event.source.userId.toString()}-name`],
+																url: db[`${event.source.userId.toString()}-url`],
+																department: db[`${event.source.userId.toString()}-department`],
+																grade: db[`${event.source.userId.toString()}-grade`],
+																field: db[`${event.source.userId.toString()}-field`],
+																question: db[`${event.source.userId.toString()}-question`]
+															}
+															postHandler(user_data, event.source.userId)
+															delete db[event.source.userId.toString()]
+															delete db[`${event.source.userId.toString()}-name`]
+															delete db[`${event.source.userId.toString()}-url`]
+															delete db[`${event.source.userId.toString()}-department`]
+															delete db[`${event.source.userId.toString()}-grade`]
+															delete db[`${event.source.userId.toString()}-field`]
+															delete db[`${event.source.userId.toString()}-question`]
+														})
+													})
+												}
+											}
+
+											else if (value == 7){
+													// 志望業界を教えて
+													if (event.message.text == "相談したい"){
+														bot.replyMessage(event.replyToken, msg.field)
+														db[event.source.userId.toString()] = 8
+													}
+													else{
+														bot.replyMessage(event.replyToken, msg.goodby)
+														delete db[event.source.userId.toString()]
+													}
+													
+											}
+
+											else if (value == 8){
+												if (["化学", "食品", "電機メーカー", "総合商社", "ソフトウェア", "インターネットサービス", "建設", "重工","その他"].includes(event.message.text)){
+													// 都合のいい日程を教えて
+													bot.replyMessage(event.replyToken, msg.question)
+													db[event.source.userId.toString()] = 9
+													db[`${event.source.userId.toString()}-field`] = event.message.text
+													db[`${event.source.userId.toString()}-question`] = []
+												}
+												else{
+													bot.replyMessage(event.replyToken, msg.misstake)
+												}
+											}
+
+											else if (value == 9){
+												db[`${event.source.userId.toString()}-question`].push(event.message.text)
+												bot.replyMessage(event.replyToken, msg.anotherquestion)
+												db[event.source.userId.toString()] = 10
+											}
+
+											else if (value == 10){
+												if(event.message.text == "ある"){
+													db[event.source.userId.toString()] = 9
+													bot.replyMessage(event.replyToken, msg.question)
+												}
+												else{
+													bot.replyMessage(event.replyToken, msg.finish).then(() => {
+														bot.getProfile(event.source.userId).then(profile => {
+															db[`${event.source.userId.toString()}-name`] = profile.displayName
+															db[`${event.source.userId.toString()}-url`] = profile.pictureUrl
+														})
+														.then(() => {
+															var user_data = {
+																name: db[`${event.source.userId.toString()}-name`],
+																url: db[`${event.source.userId.toString()}-url`],
+																field: db[`${event.source.userId.toString()}-field`],
+																question: db[`${event.source.userId.toString()}-question`]
+															}
+															postHandler(user_data, event.source.userId)
+															delete db[event.source.userId.toString()]
+															delete db[`${event.source.userId.toString()}-name`]
+															delete db[`${event.source.userId.toString()}-url`]
+															delete db[`${event.source.userId.toString()}-field`]
+															delete db[`${event.source.userId.toString()}-question`]
+														})
+													})
 												}
 											}
 											else{
@@ -124,75 +192,13 @@ app.post('/bot/webhook', line.middleware(config), (req, res, next) => {
 											}
                     })
 								}
-								else if (event.type === "postback"){
-									if (event.postback.data == "date"){
-										bot.replyMessage(event.replyToken, msg.timepicker)
-										db[`${event.source.userId.toString()}-date`] = event.postback.params.date
-									}
-									else if (event.postback.data == "time"){
-										bot.replyMessage(event.replyToken, msg.finish).then(() => {
-											bot.getProfile(event.source.userId).then(profile => {
-												db[`${event.source.userId.toString()}-name`] = profile.displayName
-												db[`${event.source.userId.toString()}-url`] = profile.pictureUrl
-												db[`${event.source.userId.toString()}-time`] = event.postback.params.time
-											})
-											.then(() => {
-												var user_data = {
-													name: db[`${event.source.userId.toString()}-name`],
-													url: db[`${event.source.userId.toString()}-url`],
-													department: db[`${event.source.userId.toString()}-department`],
-													grade: db[`${event.source.userId.toString()}-grade`],
-													field: db[`${event.source.userId.toString()}-field`],
-													date: db[`${event.source.userId.toString()}-date`]
-												}
-												postHandler(user_data, event.source.userId)
-												delete db[event.source.userId.toString()]
-												delete db[`${event.source.userId.toString()}-name`]
-												delete db[`${event.source.userId.toString()}-url`]
-												delete db[`${event.source.userId.toString()}-department`]
-												delete db[`${event.source.userId.toString()}-grade`]
-												delete db[`${event.source.userId.toString()}-field`]
-												delete db[`${event.source.userId.toString()}-date`]
-
-											})
-										})
-									}
-								}
             }
             else{
 							var docRef = firestore.collection("enter").doc(event.source.userId)
 							docRef.get().then(doc => {
 								if(doc.exists){
-									if( new Date(doc.data().date).getTime() >= new Date(moment().format('Y-MM-DD')).getTime() ){
-										// キャンセル？日程変更？
-										bot.replyMessage(event.replyToken, {
-											"type": "template",
-											"altText": "this is a confirm template",
-											"template": {
-													"type": "confirm",
-													"actions": [
-															{
-																	"type": "message",
-																	"label": "しない",
-																	"text": "しない"
-															},
-															{
-																	"type": "message",
-																	"label": "キャンセルしたい",
-																	"text": "キャンセルしたい"
-															}
-													],
-													"text": `お久しぶりです。次回面接日程は${moment(doc.data().date).format('M月D日')} ${moment(doc.data().time).format('h時mm分')}です。キャンセルしますか？`
-											}
-										})
-										db[event.source.userId.toString()] = 7
-										db[`${event.source.userId.toString()}-date`] = doc.data().date
-									}
-									// 登録済みだけど、面談は終了している
-									else{
-										bot.replyMessage(event.replyToken, msg.check_interview)
-										db[event.source.userId.toString()] = 1
-									}
+									bot.replyMessage(event.replyToken, msg.ohisashiburi)
+									db[event.source.userId.toString()] = 7
 								}
 								else{
 									bot.replyMessage(event.replyToken, msg.check_interview)
@@ -204,4 +210,4 @@ app.post('/bot/webhook', line.middleware(config), (req, res, next) => {
 })
 
 
-app.listen(process.env.PORT || 9000);
+app.listen(process.env.PORT || 3000);
